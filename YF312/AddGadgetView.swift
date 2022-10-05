@@ -68,7 +68,7 @@ struct AddGadgetView: View {
 }
 
 struct AddGadgetView_Previews: PreviewProvider {
-    static let house = House(name: "", gadgets: [], automations: [], temperature: 0, humidity: 0)
+    static let house = House(name: "", gadgets: [], automations: [])
     static var previews: some View {
         AddGadgetView(house: house)
     }
