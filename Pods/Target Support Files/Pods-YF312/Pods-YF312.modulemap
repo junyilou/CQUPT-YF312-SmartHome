@@ -1,0 +1,6 @@
+framework module Pods_YF312 {
+  umbrella header "Pods-YF312-umbrella.h"
+
+  export *
+  module * { export * }
+}
