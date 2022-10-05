@@ -16,23 +16,35 @@ struct SensorSelectionView: View {
         HStack {
             Text("当")
             Menu(comparingData) {
-                ForEach(["温度", "湿度"], id: \.self) { data  in
+                ForEach(["温度", "湿度", "亮度"], id: \.self) { data  in
                     Button(data) {
                         automation.comparingData = data
                         comparingData = automation.comparingData
                     }
                 }
             }
-            Menu(comparingMethod) {
-                ForEach(["大于", "小于"], id: \.self) { method in
-                    Button(method) {
-                        automation.comparingMethod = method
-                        comparingMethod = automation.comparingMethod
+            if automation.comparingData != "亮度" {
+                Menu(comparingMethod) {
+                    ForEach(["大于", "小于"], id: \.self) { method in
+                        Button(method) {
+                            automation.comparingMethod = method
+                            comparingMethod = automation.comparingMethod
+                        }
+                    }
+                }
+                Text(automation.comparingValueFormatted().replacingOccurrences(of: " ", with: ""))
+                Slider(value: $automation.comparingValue, in: 0...100)
+            } else {
+                Menu(comparingMethod) {
+                    ForEach(["变亮/变暗", "变亮", "变暗"], id: \.self) { method in
+                        Button(method) {
+                            automation.comparingMethod = method
+                            comparingMethod = automation.comparingMethod
+                            automation.comparingValue = 0
+                        }
                     }
                 }
             }
-            Text(automation.comparingValueFormatted().replacingOccurrences(of: " ", with: ""))
-            Slider(value: $automation.comparingValue, in: 0...100)
             Text("时")
         }
     }
@@ -55,7 +67,7 @@ struct DeviceSelectionView: View {
                 }
             }
             Menu(comparingMethod) {
-                ForEach(["打开", "关闭"], id: \.self) { method in
+                ForEach(["打开/关闭", "打开", "关闭"], id: \.self) { method in
                     Button(method) {
                         automation.comparingMethod = method
                         comparingMethod = automation.comparingMethod
@@ -104,7 +116,7 @@ struct AddAutomationView: View {
     @Environment(\.dismiss) var dismiss
     @State private var dataType = ""
     
-    let dataTypes = ["传感器数据", "设备开关"]
+    let dataTypes = ["温湿度数据", "设备开关"]
     var body: some View {
         NavigationView {
             Form {
@@ -123,7 +135,7 @@ struct AddAutomationView: View {
                         }
                     }
                     .pickerStyle(.segmented)
-                    if dataType == "传感器数据" {
+                    if dataType == "温湿度数据" {
                         SensorSelectionView(house:house, automation: automation)
                     } else if dataType == "设备开关" {
                         DeviceSelectionView(house:house, automation: automation)
@@ -158,13 +170,13 @@ struct AddAutomationView: View {
 }
 
 struct AddAutomationView_Previews: PreviewProvider {
-    static let gadget1 = Gadget(name: "大门", isOn: true, imageOn: "door.left.hand.open")
-    static let gadget2 = Gadget(name: "LED", isOn: false, imageOn: "light.beacon.max.fill")
+    static let gadget1 = Gadget(name: "大门", isOn: false, imageOn: "door.left.hand.open")
+    static let gadget2 = Gadget(name: "灯泡", isOn: true, imageOn: "lightbulb.fill")
     static let gadget3 = Gadget(name: "窗帘", isOn: false, imageOn: "curtains.open")
     static let gadget4 = Gadget(name: "空调", isOn: true, imageOn: "air.conditioner.horizontal.fill")
-    static let automation1 = Automation(name: "自动关门", enabled: false, comparingData: "温度", comparingMethod: "大于", comparingValue: 20.0, targetData: "大门", targetMethod: "关闭")
-    static let automation2 = Automation(name: "关窗开灯", enabled: true, comparingData: "窗帘", comparingMethod: "关闭", comparingValue: -1, targetData: "LED", targetMethod: "打开/关闭")
-    static let house = House(name: "YF312", gadgets: [gadget1, gadget2, gadget3, gadget4], automations: [automation1, automation2], temperature: 25, humidity: 75)
+    static let automation1 = Automation(name: "天热了开空调", enabled: false, comparingData: "温度", comparingMethod: "大于", comparingValue: 30.0, targetData: "空调", targetMethod: "打开")
+    static let automation2 = Automation(name: "窗户与灯泡相互开关", enabled: true, comparingData: "窗帘", comparingMethod: "打开/关闭", comparingValue: -1, targetData: "灯泡", targetMethod: "打开/关闭")
+    static let house = House(name: "YF312", gadgets: [gadget1, gadget2, gadget3, gadget4], automations: [automation1, automation2])
     static var previews: some View {
         AddAutomationView(house: house)
     }

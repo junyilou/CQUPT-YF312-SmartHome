@@ -53,6 +53,8 @@ struct SummaryView: View {
             return "thermometer.medium"
         case "湿度":
             return "humidity"
+        case "亮度":
+            return "light.max"
         default:
             return house.gadgets.first{$0.name == value}!.imageOn
         }
@@ -70,6 +72,12 @@ struct SummaryView: View {
             return "arrow.up.to.line.compact"
         case "小于":
             return "arrow.down.to.line.compact"
+        case "变亮":
+            return "arrow.up.to.line.compact"
+        case "变暗":
+            return "arrow.down.to.line.compact"
+        case "变亮/变暗":
+            return "togglepower"
         default:
             return "house"
         }
@@ -91,13 +99,13 @@ struct AutomationView: View {
 
 
 struct AutomationView_Previews: PreviewProvider {
-    static let gadget1 = Gadget(name: "大门", isOn: true, imageOn: "door.left.hand.open")
-    static let gadget2 = Gadget(name: "LED", isOn: false, imageOn: "light.beacon.max.fill")
+    static let gadget1 = Gadget(name: "大门", isOn: false, imageOn: "door.left.hand.open")
+    static let gadget2 = Gadget(name: "灯泡", isOn: true, imageOn: "lightbulb.fill")
     static let gadget3 = Gadget(name: "窗帘", isOn: false, imageOn: "curtains.open")
     static let gadget4 = Gadget(name: "空调", isOn: true, imageOn: "air.conditioner.horizontal.fill")
-    static let automation1 = Automation(name: "自动关门", enabled: false, comparingData: "温度", comparingMethod: "大于", comparingValue: 20.0, targetData: "大门", targetMethod: "关闭")
-    static let automation2 = Automation(name: "关窗开灯", enabled: true, comparingData: "窗帘", comparingMethod: "关闭", comparingValue: -1, targetData: "LED", targetMethod: "打开/关闭")
-    static let house = House(name: "YF312", gadgets: [gadget1, gadget2, gadget3, gadget4], automations: [automation1, automation2], temperature: 25, humidity: 75)
+    static let automation1 = Automation(name: "天热了开空调", enabled: false, comparingData: "温度", comparingMethod: "大于", comparingValue: 30.0, targetData: "空调", targetMethod: "打开")
+    static let automation2 = Automation(name: "窗户与灯泡相互开关", enabled: true, comparingData: "窗帘", comparingMethod: "打开/关闭", comparingValue: -1, targetData: "灯泡", targetMethod: "打开/关闭")
+    static let house = House(name: "YF312", gadgets: [gadget1, gadget2, gadget3, gadget4], automations: [automation1, automation2])
     static var previews: some View {
         NavigationView {
             AutomationView(house: house)
