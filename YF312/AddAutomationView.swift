@@ -116,7 +116,7 @@ struct AddAutomationView: View {
     @Environment(\.dismiss) var dismiss
     @State private var dataType = ""
     
-    let dataTypes = ["温湿度数据", "设备开关"]
+    let dataTypes = ["环境信息", "设备开关"]
     var body: some View {
         NavigationView {
             Form {
@@ -135,7 +135,7 @@ struct AddAutomationView: View {
                         }
                     }
                     .pickerStyle(.segmented)
-                    if dataType == "温湿度数据" {
+                    if dataType == "环境信息" {
                         SensorSelectionView(house:house, automation: automation)
                     } else if dataType == "设备开关" {
                         DeviceSelectionView(house:house, automation: automation)
