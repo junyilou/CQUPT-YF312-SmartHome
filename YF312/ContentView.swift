@@ -47,7 +47,7 @@ struct ContentView: View {
                             Text(house.ambientFormatted)
                         }
                         .font(.headline)
-                        Text("最后更新: \(house.lastUpdate.formatted(date: .omitted, time: .standard))")
+                        Text("最后更新: \(house.lastUpdate?.formatted(date: .omitted, time: .standard) ?? "没有数据")")
                             .font(.caption)
                     }
                     .padding(.bottom)
@@ -102,7 +102,7 @@ struct ContentView: View {
                 AddAutomationView(house: house)
             }
             .tabItem {
-                Label("自动化", systemImage: "gearshape.2.fill")
+                Label("自动化", systemImage: "gear.circle.fill")
             }
             .navigationViewStyle(.stack)
         }
