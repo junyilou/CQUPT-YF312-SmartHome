@@ -23,18 +23,18 @@ class Gadget: Identifiable, ObservableObject {
     var valueMQTTFormatted: String { String(format: "%.0f", valueMQTT) }
     
     func setStatus(_ setTo: Bool?, house: House, isAutomated: Bool = false) {
-        if setTo != nil {
-            isOn = setTo!
-            if isMQTTDevice0 {
-                valueMQTT = isOn ? 10 : 0
-            }
-        }
-        if isMQTTDevice0 {
-            isOn = valueMQTT > 0
-        }
-        histories[Date()] = "\(isAutomated ? "联动" : "手动")\(isMQTTDevice0 ? ("设为 \(valueMQTTFormatted)") : (isOn ? "开启" : "关闭"))"
         if isMQTTDevice0 || isMQTTDevice1 {
-            mqttPublish("{\"\(name)\":\(isMQTTDevice0 ? valueMQTTFormatted : (isOn ? "1" : "0"))}", house: house)
+            if setTo != nil {
+                valueMQTT = setTo! ? 10 : 0
+            }
+            isOn = valueMQTT > 0
+            let published = mqttPublish("{\"\(name)\":\(isMQTTDevice0 ? valueMQTTFormatted : (isOn ? "1" : "0"))}", house: house)
+            if published {
+                histories[Date()] = "\(isAutomated ? "联动" : "手动")设为 \(valueMQTTFormatted)"
+            }
+        } else {
+            isOn = setTo!
+            histories[Date()] = "\(isAutomated ? "联动" : "手动")\(isOn ? "开启" : "关闭")"
         }
         for automation in house.automations {
             if automation.targetData != name && automation.comparingData == name && automation.shouldRun(fromData: isOn ? 2 : 0) {
@@ -43,12 +43,18 @@ class Gadget: Identifiable, ObservableObject {
         }
     }
     
-    func mqttPublish(_ data: String, house: House) {
+    func mqttPublish(_ data: String, house: House) -> Bool {
         if let Client = house.client {
             if Client.currentAppState.appConnectionState == .connectedSubscribed {
                 Client.publish(with: data)
+                return true
+            } else {
+                house.popNotification("请先订阅话题再操作设备", 3)
             }
+        } else {
+            house.popNotification("请先连接 MQTT 服务再操作设备", 3)
         }
+        return false
     }
     
     init(id: UUID = UUID(), name: String, isOn: Bool, imageOn: String, histories: [Date : String] = [Date(): "初始化"], valueMQTT: Double = 0) {
@@ -108,7 +114,9 @@ class Automation: Identifiable, ObservableObject {
         default:
             targetStatus = targetGadget.isOn
         }
-        targetGadget.setStatus(targetStatus, house: house, isAutomated: true)
+        if targetStatus != targetGadget.isOn {
+            targetGadget.setStatus(targetStatus, house: house, isAutomated: true)
+        }
         house.popNotification("已触发「\(name)」: \(targetMethod) \(targetData)")
     }
     
@@ -150,13 +158,12 @@ class House: Identifiable, ObservableObject {
     @Published var ambient: Double {
         willSet { triggerAutomations(value: newValue, comparing: "亮度", previousValue: ambient) }
     }
-    @Published var getURL: String
-    @Published var setURL: String
+    @Published var topic: String
     @Published var notificationText: String
     @Published var notificationShown: Bool
-    @Published var lastUpdate: Date
+    @Published var lastUpdate: Date?
     var client: MQTTManager?
-
+    
     var temperatureFormatted: String {
         String(format: "%.0f℃", temperature)
     }
@@ -168,10 +175,10 @@ class House: Identifiable, ObservableObject {
     }
     
     init(id: UUID = UUID(), name: String,
-         gadgets: [Gadget], automations: [Automation], lastUpdate: Date = Date(),
+         gadgets: [Gadget], automations: [Automation], lastUpdate: Date? = nil,
          temperature: Double = 0, humidity: Double = 0, ambient: Double = -1,
-         getURL: String = "/mysmarthome/mypub", setURL: String = "/mysmarthome/mysub",
-         notificationText: String = "", notificationShown: Bool = false, client: MQTTManager? = nil) {
+         notificationText: String = "", notificationShown: Bool = false,
+         topic: String = "subscribe", client: MQTTManager? = nil) {
         self.id = id
         self.name = name
         self.gadgets = gadgets
@@ -179,8 +186,7 @@ class House: Identifiable, ObservableObject {
         self.temperature = temperature
         self.humidity = humidity
         self.ambient = ambient
-        self.getURL = getURL
-        self.setURL = setURL
+        self.topic = topic
         self.notificationText = notificationText
         self.notificationShown = notificationShown
         self.lastUpdate = lastUpdate
@@ -205,15 +211,16 @@ class House: Identifiable, ObservableObject {
         guard let decoded = try? JSONDecoder().decode(remoteInfo.self, from: data.data(using: .utf8)!) else {
             return
         }
+        // popNotification("数据已更新", 1)
         temperature = decoded.Temp
         humidity = decoded.Hum
         ambient = decoded.Light == 1 ? 0 : 1
         lastUpdate = Date()
     }
     
-    func popNotification(_ text: String) {
+    func popNotification(_ text: String, _ delay: Double = 3) {
         notificationText = text
         withAnimation { notificationShown = true }
-        withAnimation(Animation.easeInOut.delay(3)) { notificationShown = false }
+        withAnimation(Animation.easeInOut.delay(delay)) { notificationShown = false }
     }
 }
