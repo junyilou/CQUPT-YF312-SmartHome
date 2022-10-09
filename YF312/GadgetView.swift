@@ -45,6 +45,39 @@ struct ButtonModifier: ViewModifier {
     }
 }
 
+struct MQTTGadgetView: View {
+    @ObservedObject var house: House
+    @ObservedObject var gadget: Gadget
+    var body: some View {
+        VStack {
+            if house.notificationShown {
+                NotificationView(text: house.notificationText)
+                    .padding()
+            }
+            HStack {
+                Text("亮度等级: \(gadget.valueMQTTFormatted)")
+                    .font(.title2)
+                Spacer()
+                Button {
+                    if gadget.mqttPublish("{\"LED0\":\"breath\"}", house: house) {
+                        gadget.histories[Date()] = "呼吸灯"
+                    }
+                } label: {
+                    Image(systemName: "suit.heart")
+                        .modifier(ButtonModifier())
+                }
+                Button {
+                    gadget.setStatus(nil, house: house)
+                } label: {
+                    Image(systemName: "arrow.turn.down.left")
+                        .modifier(ButtonModifier())
+                }
+            }
+            Slider(value: $gadget.valueMQTT, in: 0...10, step: 1)
+        }
+    }
+}
+
 struct GadgetView: View {
     @ObservedObject var house: House
     @ObservedObject var gadget: Gadget
@@ -53,27 +86,7 @@ struct GadgetView: View {
             VStack(alignment: .leading) {
                 Group {
                     if gadget.isMQTTDevice0 {
-                        VStack {
-                            HStack {
-                                Text("亮度等级: \(gadget.valueMQTTFormatted)")
-                                    .font(.title2)
-                                Spacer()
-                                Button {
-                                    gadget.mqttPublish("{\"LED0\":\"breath\"}", house: house)
-                                    gadget.histories[Date()] = "呼吸灯"
-                                } label: {
-                                    Image(systemName: "suit.heart")
-                                        .modifier(ButtonModifier())
-                                }
-                                Button {
-                                    gadget.setStatus(nil, house: house)
-                                } label: {
-                                    Image(systemName: "arrow.turn.down.left")
-                                        .modifier(ButtonModifier())
-                                }
-                            }
-                            Slider(value: $gadget.valueMQTT, in: 0...10, step: 1)
-                        }
+                        MQTTGadgetView(house: house, gadget: gadget)
                     } else {
                         Button {
                             gadget.setStatus(!gadget.isOn, house: house)
