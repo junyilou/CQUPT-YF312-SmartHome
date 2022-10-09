@@ -15,50 +15,40 @@ struct ConnectView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section("服务器信息") {
-                    TextField("服务器地址", text: $brokerAddress)
-                }
-                Section("订阅信息") {
+                Section("MQTT 信息") {
                     HStack {
-                        Text("下载数据")
+                        Text("服务器")
                             .foregroundColor(.secondary)
                             .padding(.trailing)
-                        TextField("话题", text: $house.getURL)
+                        TextField("地址", text: $brokerAddress)
                     }
                     HStack {
-                        Text("上传数据")
+                        Text("订阅话题")
                             .foregroundColor(.secondary)
                             .padding(.trailing)
-                        TextField("话题", text: $house.setURL)
+                        TextField("话题", text: $house.topic)
                     }
                 }
                 Section {
-                    Button(action: {configureAndConnect()}){
+                    Button(action: { configureAndConnect() }) {
                         Text("启动连接")
                     }
                     .disabled(mqttManager.currentAppState.appConnectionState != .disconnected || brokerAddress.isEmpty)
-                    Button(action: {disconnect()}){
+                    Button(action: { mqttManager.disconnect() }) {
                         Text("断开连接")
                     }
                     .disabled(mqttManager.currentAppState.appConnectionState == .disconnected)
-                } header: {
-                    Text(mqttManager.connectionStateMessage())
-                        .foregroundColor(mqttManager.isConnected() ? .green : nil)
-                }
-                Section {
-                    Group {
-                        Button(action: {mqttManager.subscribe(topic: house.getURL)}) {
-                            Text("订阅下载话题")
-                        }
-                        Button(action: {mqttManager.subscribe(topic: house.setURL)}) {
-                            Text("订阅上传话题")
-                        }
+                    Button(action: { mqttManager.subscribe(topic: house.topic)} ) {
+                        Text("订阅话题")
                     }
-                    .disabled(mqttManager.currentAppState.appConnectionState != .connected && mqttManager.currentAppState.appConnectionState != .connectedSubscribed && mqttManager.currentAppState.appConnectionState != .connectedUnSubscribed)
-                    Button(action: {mqttManager.unSubscribeFromCurrentTopic()}) {
+                    .disabled(mqttManager.currentAppState.appConnectionState != .connected && mqttManager.currentAppState.appConnectionState != .connectedUnSubscribed)
+                    Button(action: { mqttManager.unSubscribeFromCurrentTopic() }) {
                         Text("退订话题")
                     }
                     .disabled(mqttManager.currentAppState.appConnectionState != .connectedSubscribed)
+                } header: {
+                    Text(mqttManager.connectionStateMessage())
+                        .foregroundColor(mqttManager.isConnected() ? .green : nil)
                 }
             }
             .toolbar {
@@ -72,10 +62,6 @@ struct ConnectView: View {
         mqttManager.initializeMQTT(host: brokerAddress, identifier: UUID().uuidString, house: house)
         mqttManager.connect()
         house.client = mqttManager
-    }
-
-    private func disconnect() {
-        mqttManager.disconnect()
     }
 }
 
