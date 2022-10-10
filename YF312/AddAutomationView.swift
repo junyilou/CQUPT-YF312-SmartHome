@@ -10,37 +10,37 @@ import SwiftUI
 struct SensorSelectionView: View {
     @ObservedObject var house: House
     @ObservedObject var automation: Automation
-    @State private var comparingData = "数据"
-    @State private var comparingMethod = "变化"
     var body: some View {
         HStack {
             Text("当")
-            Menu(comparingData) {
+            Menu(automation.comparingData) {
                 ForEach(["温度", "湿度", "亮度"], id: \.self) { data  in
                     Button(data) {
                         automation.comparingData = data
-                        comparingData = automation.comparingData
+                        if automation.comparingData != "亮度" {
+                            automation.comparingMethod = "大于"
+                            automation.comparingValue = 50
+                        } else {
+                            automation.comparingMethod = "变亮/变暗"
+                            automation.comparingValue = 0
+                        }
                     }
                 }
             }
             if automation.comparingData != "亮度" {
-                Menu(comparingMethod) {
+                Menu(automation.comparingMethod) {
                     ForEach(["大于", "小于"], id: \.self) { method in
                         Button(method) {
                             automation.comparingMethod = method
-                            comparingMethod = automation.comparingMethod
                         }
                     }
                 }
-                Text(automation.comparingValueFormatted().replacingOccurrences(of: " ", with: ""))
-                Slider(value: $automation.comparingValue, in: 0...100)
+                Stepper(automation.comparingValueFormatted().replacingOccurrences(of: " ", with: ""), value: $automation.comparingValue, in: 0...100)
             } else {
-                Menu(comparingMethod) {
+                Menu(automation.comparingMethod) {
                     ForEach(["变亮/变暗", "变亮", "变暗"], id: \.self) { method in
                         Button(method) {
                             automation.comparingMethod = method
-                            comparingMethod = automation.comparingMethod
-                            automation.comparingValue = 0
                         }
                     }
                 }
@@ -53,25 +53,20 @@ struct SensorSelectionView: View {
 struct DeviceSelectionView: View {
     @ObservedObject var house: House
     @ObservedObject var automation: Automation
-    @State private var comparingData = "设备"
-    @State private var comparingMethod = "变化"
     var body: some View {
         HStack {
             Text("当")
-            Menu(comparingData) {
+            Menu(automation.comparingData) {
                 ForEach(house.gadgets) { gadget in
                     Button(gadget.name) {
                         automation.comparingData = gadget.name
-                        comparingData = automation.comparingData
                     }
                 }
             }
-            Menu(comparingMethod) {
+            Menu(automation.comparingMethod) {
                 ForEach(["打开/关闭", "打开", "关闭"], id: \.self) { method in
                     Button(method) {
                         automation.comparingMethod = method
-                        comparingMethod = automation.comparingMethod
-                        automation.comparingValue = -1
                     }
                 }
             }
@@ -84,24 +79,20 @@ struct DeviceSelectionView: View {
 struct TargetSelectionView: View {
     @ObservedObject var house: House
     @ObservedObject var automation: Automation
-    @State private var targetMethod = "控制"
-    @State private var targetData = "设备"
     var body: some View {
         HStack {
-            Menu(targetMethod) {
+            Menu(automation.targetMethod) {
                 ForEach(["打开/关闭", "打开", "关闭"], id: \.self) { method in
                     Button(method) {
                         automation.targetMethod = method
-                        targetMethod = automation.targetMethod
                     }
                 }
             }
-            Menu(targetData) {
+            Menu(automation.targetData) {
                 ForEach(house.gadgets) { gadget in
                     if gadget.name != automation.comparingData {
                         Button(gadget.name) {
                             automation.targetData = gadget.name
-                            targetData = automation.targetData
                         }
                     }
                 }
@@ -160,6 +151,19 @@ struct AddAutomationView: View {
                     })
                     .disabled(notCompleted())
                 }
+            }
+            .onChange(of: dataType) { _ in
+                if dataType == "环境信息" {
+                    automation.comparingData = "温度"
+                    automation.comparingMethod = "大于"
+                    automation.comparingValue = 50
+                } else if dataType == "设备开关" {
+                    automation.comparingData = house.gadgets[0].name
+                    automation.comparingMethod = "打开/关闭"
+                    automation.comparingValue = -1
+                }
+                automation.targetMethod = "打开/关闭"
+                automation.targetData = house.gadgets[0].name
             }
         }
     }
