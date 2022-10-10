@@ -82,8 +82,10 @@ struct ContentView: View {
                 Group {
                     if house.automations.count > 0 {
                         AutomationView(house: house)
-                    } else {
+                    } else if house.gadgets.count > 0 {
                         Text("还没有添加自动化")
+                    } else {
+                        Text("还没有添加设备")
                     }
                 }
                 .navigationTitle("自动化")

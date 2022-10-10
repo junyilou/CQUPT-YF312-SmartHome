@@ -43,7 +43,7 @@ struct SummaryView: View {
                 Image(systemName: methodImage(automation.targetMethod))
                     .modifier(SummaryModifier())
             }
-            .padding(.top)
+            .frame(minHeight: 60)
         }
     }
     
