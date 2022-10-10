@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ConnectView: View {
-    @State private var brokerAddress: String = ""
+    @AppStorage("brokerAddress") private var brokerAddress: String = ""
     @ObservedObject var house: House
     @ObservedObject var mqttManager: MQTTManager
     @Environment (\.dismiss) var dismiss
@@ -20,13 +20,14 @@ struct ConnectView: View {
                         Text("服务器")
                             .foregroundColor(.secondary)
                             .padding(.trailing)
+                            .disableAutocorrection(true)
                         TextField("地址", text: $brokerAddress)
                     }
                     HStack {
                         Text("订阅话题")
                             .foregroundColor(.secondary)
                             .padding(.trailing)
-                        TextField("话题", text: $house.topic)
+                        SecureField("话题", text: $house.topic)
                     }
                 }
                 Section {
