@@ -12,6 +12,7 @@ struct ConnectView: View {
     @ObservedObject var house: House
     @ObservedObject var mqttManager: MQTTManager
     @Environment (\.dismiss) var dismiss
+    @FocusState private var keyboardFocus: Bool
     var body: some View {
         NavigationView {
             Form {
@@ -20,14 +21,20 @@ struct ConnectView: View {
                         Text("服务器")
                             .foregroundColor(.secondary)
                             .padding(.trailing)
-                            .disableAutocorrection(true)
                         TextField("地址", text: $brokerAddress)
+                            .disableAutocorrection(true)
+                            .textContentType(.URL)
+                            .keyboardType(.URL)
+                            .autocapitalization(.none)
+                            .textInputAutocapitalization(.never)
+                            .focused($keyboardFocus)
                     }
                     HStack {
                         Text("订阅话题")
                             .foregroundColor(.secondary)
                             .padding(.trailing)
                         SecureField("话题", text: $house.topic)
+                            .focused($keyboardFocus)
                     }
                 }
                 Section {
@@ -54,6 +61,12 @@ struct ConnectView: View {
             }
             .toolbar {
                 Button("关闭", action: { dismiss() })
+            }
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("完成", action: { keyboardFocus = false })
+                }
             }
             .navigationTitle("设置服务")
         }
